@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>말차길드 홈</title>
+    <style>
+        /* 기본 초기화 */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* 📱 모바일 화면용 디자인 (800px 이하) */
+        @media (max-width: 800px) {
+            #maindiv {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                background-color: black;
+                z-index: 1000;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            }
+
+            .mobile-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 10px 20px;
+                height: 50px;
+            }
+
+            #title {
+                font-size: 1.3rem;
+                color: aquamarine;
+                margin: 0;
+                cursor: pointer;
+            }
+
+            .toggle-btn {
+                color: aliceblue;
+                font-size: 0.9rem;
+                cursor: pointer;
+                background: #222;
+                padding: 6px 12px;
+                border-radius: 20px;
+                border: 1px solid #444;
+                transition: background 0.3s;
+            }
+
+            .menu-container {
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.4s ease-in-out;
+                background-color: #111;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .menu-container.open {
+                max-height: 250px;
+                border-top: 1px solid #222;
+            }
+
+            .mainmenu {
+                font-size: 1rem;
+                color: aliceblue;
+                margin: 0;
+                padding: 15px 20px;
+                border-bottom: 1px solid #222;
+                cursor: pointer;
+            }
+            .mainmenu:active {
+                background-color: #222;
+                color: blanchedalmond;
+            }
+            
+            .content-box {
+                margin-top: 90px;
+                padding: 20px;
+            }
+        }
+
+        /* 🖥️ 컴퓨터 화면용 디자인 (801px 이상) */
+        @media (min-width: 801px) {
+            #maindiv {
+                width: 200px;
+                height: 100vh;
+                background-color: black;
+                position: fixed;
+                top: 0;
+                left: 0;
+                display: flex;
+                flex-direction: column;
+                padding: 40px 20px;
+                box-sizing: border-box;
+            }
+
+            .mobile-header { display: block; }
+            .toggle-btn { display: none; }
+
+            #title {
+                font-size: 1.8rem;
+                color: aquamarine;
+                margin: 0 0 40px 0;
+                line-height: 1.3;
+                cursor: pointer;
+            }
+
+            .menu-container {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+                max-height: none !important;
+            }
+
+            .mainmenu {
+                font-size: 1rem;
+                color: aliceblue;
+                margin: 0;
+                transition: all 0.45s ease-out;
+                transform-origin: left center;
+                cursor: pointer;
+            }
+
+            .mainmenu:hover {
+                transform: scale(1.15);
+                color: blanchedalmond;
+            }
+            
+            .content-box {
+                margin-left: 240px;
+                padding: 40px;
+            }
+        }
+
+        /* 📊 계산기 공통 스타일 카드 */
+        .calculator-card {
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 450px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 1px solid #333;
+            display: none;
+        }
+
+        .calculator-card.active {
+            display: block;
+        }
+
+        .calculator-card h2 {
+            margin-top: 0;
+            color: aquamarine;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            color: #ccc;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            background-color: #1a1a1a;
+            color: #fff;
+            border: 1px solid #444;
+            border-radius: 6px;
+            font-size: 1rem;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .input-group input:focus {
+            border-color: aquamarine;
+        }
+
+        .result-box {
+            background-color: #1a1a1a;
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+            margin-top: 25px;
+            border: 1px dashed aquamarine;
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+
+        .result-title {
+            font-size: 0.9rem;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+
+        .result-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: aquamarine;
+            white-space: pre-line;
+        }
+
+        /* 팝업 모달창 전체 배경 가림막 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* 팝업창 본체 */
+        .modal-content {
+            background-color: #222;
+            border: 2px solid aquamarine;
+            border-radius: 12px;
+            padding: 25px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            color: aquamarine;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+
+        .modal-content p {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #ddd;
+            margin: 0 0 10px 0;
+        }
+
+        /* 닫기 버튼 스타일 */
+        .close-modal-btn {
+            background-color: #333;
+            color: aquamarine;
+            border: 1px solid #444;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        .close-modal-btn:hover {
+            background-color: aquamarine;
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="maindiv">
+        <div class="mobile-header">
+            <h1 id="title" onclick="openInfoModal()">
+                마피아<br class="pc-only">&nbsp;&nbsp;계산기
+            </h1>
+            <div class="toggle-btn" onclick="toggleMenu()">계산기 메뉴 ▼</div>
+        </div>
+
+        <nav id="menuContainer" class="menu-container">
+            <p id="poprank" class="mainmenu" onclick="showCalculator('rank')">
+                - 명랭합 계산기
+            </p>
+            <p id="ukan" class="mainmenu" onclick="showCalculator('ukan')">
+                - 우칸 계산기
+            </p>
+        </nav>
+    </div>
+
+    <div class="content-box">
+        
+        <div id="rankCalc" class="calculator-card active">
+            <h2>명랭합 계산기</h2>
+            
+            <div class="input-group">
+                <label for="reputation">명성 입력</label>
+                <input type="number" id="reputation" step="1" value="0" oninput="calculateRankSum()" placeholder="숫자 입력">
+            </div>
+
+            <div class="input-group">
+                <label for="rankScore">랭크 점수 입력</label>
+                <input type="number" id="rankScore" step="100" value="4000" oninput="calculateRankSum()" placeholder="숫자 입력">
+            </div>
+
+            <div class="input-group">
+                <label for="cutline">길조 점수 입력 (선택)</label>
+                <input type="number" id="cutline" step="0.1" oninput="calculateRankSum()" placeholder="숫자 입력">
+            </div>
+
+            <div id="rankResultBox" class="result-box">
+                <div id="rankResultTitle" class="result-title">계산 결과 (명랭합 수치)</div>
+                <div id="rankResultPrice" class="result-value">수치를 입력해주세요.</div>
+            </div>
+        </div>
+
+        <div id="ukanCalc" class="calculator-card">
+            <h2>우칸 계산기</h2>
+            
+            <div class="input-group">
+                <label for="currentUkan">현재 우칸 크기 입력</label>
+                <input type="number" id="currentUkan" step="10" value="42" oninput="calculateRubles()" placeholder="숫자 입력">
+            </div>
+
+            <div class="input-group">
+                <label for="targetUkan">목표 우칸 크기 입력</label>
+                <input type="number" id="targetUkan" step="10" value="52" oninput="calculateRubles()" placeholder="숫자 입력">
+            </div>
+
+            <div id="ukanResultBox" class="result-box">
+                <div class="result-title">계산 결과</div>
+                <div id="ukanResultPrice" class="result-value">우칸을 입력해주세요.</div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="infoModal" class="modal-overlay" onclick="closeInfoModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h3>마피아 계산기 안내</h3>
+            <p>마피아42 유저분들을 위한 통합 편의 기능입니다.</p>
+            <p><strong>• 명랭합 계산기:</strong> 명성과 랭크 점수를 더하여 10000당 1로 측정합니다. 길조를 적으면 통과 여부를 알려줍니다.</p>
+            <p><strong>• 우칸 계산기:</strong> 현재 우칸과 목표 우칸을 적으면, 소요 루블 비용을 알려드립니다.<span style="font-size:50%; color: #aaa;"><br>헤르메스는 넣기 귀찮아요</span></p>
+            <button class="close-modal-btn" onclick="document.getElementById('infoModal').classList.remove('show')">확인</button>
+        </div>
+    </div>
+
+    <script>
+        // 🛠️ 페이지 로드 시 기존 자동 연산에 더해 안내창(openInfoModal)을 즉시 띄우도록 업데이트했습니다.
+        window.onload = function() {
+            calculateRankSum();
+            calculateRubles();
+            openInfoModal(); 
+        };
+
+        function toggleMenu() {
+            const menu = document.getElementById('menuContainer');
+            const btn = document.querySelector('.toggle-btn');
+            menu.classList.toggle('open');
+            if (menu.classList.contains('open')) {
+                btn.innerText = '메뉴 닫기 ▲';
+            } else {
+                btn.innerText = '계산기 메뉴 ▼';
+            }
+        }
+
+        function showCalculator(type) {
+            document.getElementById('rankCalc').classList.remove('active');
+            document.getElementById('ukanCalc').classList.remove('active');
+
+            if (type === 'rank') {
+                document.getElementById('rankCalc').classList.add('active');
+            } else if (type === 'ukan') {
+                document.getElementById('ukanCalc').classList.add('active');
+            }
+            
+            const menu = document.getElementById('menuContainer');
+            if(menu.classList.contains('open')) {
+                toggleMenu();
+            }
+        }
+
+        function openInfoModal() {
+            document.getElementById('infoModal').classList.add('show');
+        }
+        
+        function closeInfoModal(e) {
+            document.getElementById('infoModal').classList.remove('show');
+        }
+
+        function calculateRankSum() {
+            const repStr = document.getElementById('reputation').value;
+            const rankStr = document.getElementById('rankScore').value;
+            const cutStr = document.getElementById('cutline').value;
+            
+            const resultTitle = document.getElementById('rankResultTitle');
+            const resultElement = document.getElementById('rankResultPrice');
+            const resultBox = document.getElementById('rankResultBox');
+
+            resultTitle.innerText = "계산 결과 (명랭합 수치)";
+
+            if (!repStr || !rankStr) {
+                resultElement.innerText = "수치를 입력해주세요.";
+                resultElement.style.color = "aquamarine";
+                resultBox.style.borderColor = "aquamarine";
+                return;
+            }
+
+            const rep = parseFloat(repStr);
+            const rank = parseFloat(rankStr);
+
+            if (isNaN(rep) || isNaN(rank)) {
+                showError('rank', "똑바로 적으셈;;");
+                return;
+            }
+
+            let sumResult = (rep + rank) / 10000;
+            let formattedResult = sumResult.toFixed(2);
+
+            if (cutStr !== "") {
+                const cutline = parseFloat(cutStr);
+                
+                if (isNaN(cutline)) {
+                    showError('rank', "똑바로 적으셈;;");
+                    return;
+                }
+
+                let finalCheckValue = parseFloat(formattedResult);
+
+                if (finalCheckValue >= cutline) {
+                    resultTitle.innerText = "길조 통과";
+                    resultElement.innerText = formattedResult;
+                    resultElement.style.color = "LightGreen";
+                    resultBox.style.borderColor = "LightGreen";
+                } else {
+                    resultTitle.innerText = "길조 미달";
+                    resultElement.innerText = formattedResult;
+                    resultElement.style.color = "#ff6b6b";
+                    resultBox.style.borderColor = "#ff6b6b";
+                }
+            } else {
+                resultElement.innerText = formattedResult;
+                resultElement.style.color = "aquamarine";
+                resultBox.style.borderColor = "aquamarine";
+            }
+        }
+
+        function calculateRubles() {
+            const currentStr = document.getElementById('currentUkan').value;
+            const targetStr = document.getElementById('targetUkan').value;
+            
+            const resultElement = document.getElementById('ukanResultPrice');
+            const resultBox = document.getElementById('ukanResultBox');
+
+            if (!currentStr || !targetStr) {
+                resultElement.innerText = "우칸을 입력해주세요.";
+                resultElement.style.color = "aquamarine";
+                resultBox.style.borderColor = "aquamarine";
+                return;
+            }
+
+            const current = parseInt(currentStr);
+            const target = parseInt(targetStr);
+
+            if (current < 42 || target < 42 || current % 10 !== 2 || target % 10 !== 2 || target <= current) {
+                showError('ukan', "똑바로 적으셈;;");
+                return;
+            }
+
+            resultElement.style.color = "aquamarine";
+            resultBox.style.borderColor = "aquamarine";
+
+            let totalCost = 0;
+            let currentCheck = current;
+
+            while (currentCheck < target) {
+                let stepCost = ((currentCheck - 42) / 10 + 1) * 10000;
+                totalCost += stepCost;
+                currentCheck += 10;
+            }
+
+            resultElement.innerText = totalCost.toLocaleString() + " 루블";
+        }
+
+        function showError(type, message) {
+            let resultElement, resultBox;
+            if(type === 'rank') {
+                resultElement = document.getElementById('rankResultPrice');
+                resultBox = document.getElementById('rankResultBox');
+            } else {
+                resultElement = document.getElementById('ukanResultPrice');
+                resultBox = document.getElementById('ukanResultBox');
+            }
+            resultElement.innerText = message;
+            resultElement.style.color = "#ff6b6b";       
+            resultBox.style.borderColor = "#ff6b6b";     
+        }
+    </script>
+
+</body>
+</html>
