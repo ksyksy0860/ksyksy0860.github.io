@@ -368,7 +368,6 @@
     </div>
 
     <script>
-        // 페이지 로드 시 초기 연산 및 모달 팝업 실행
         window.onload = function() {
             calculateRankSum();
             calculateRubles();
@@ -407,7 +406,6 @@
         }
         
         function closeInfoModal(e) {
-            // 바깥 어두운 배경(modal-overlay)을 정확히 클릭했을 때만 닫히도록 수정
             if (e.target === document.getElementById('infoModal')) {
                 document.getElementById('infoModal').classList.remove('show');
             }
@@ -444,7 +442,6 @@
             let sumResult = (rep + rank) / 10000;
             let formattedResult = sumResult.toFixed(2);
 
-            // 조건부 길조 확인 로직 수정 (오타 수정 반영)
             if (cutStr !== "" && cutRStr !== "" && cutPStr !== "") {
                 const cutline = parseFloat(cutStr);
                 const cutRank = parseFloat(cutRStr);
