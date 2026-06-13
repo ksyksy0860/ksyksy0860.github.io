@@ -293,7 +293,7 @@
 
         <nav id="menuContainer" class="menu-container">
             <p id="poprank" class="mainmenu" onclick="showCalculator('rank')">
-                - 명랭합 계산기
+                - 명랭합(길조) 계산기
             </p>
             <p id="ukan" class="mainmenu" onclick="showCalculator('ukan')">
                 - 우칸 계산기
@@ -304,7 +304,7 @@
     <div class="content-box">
         
         <div id="rankCalc" class="calculator-card active">
-            <h2>명랭합 계산기</h2>
+            <h2>명랭합(길조) 계산기</h2>
             
             <div class="input-group">
                 <label for="reputation">명성 입력</label>
@@ -317,8 +317,17 @@
             </div>
 
             <div class="input-group">
-                <label for="cutline">길조 점수 입력 (선택)</label>
+                <label for="cutline">길조 명랭합 입력 (선택)</label>
                 <input type="number" id="cutline" step="0.1" oninput="calculateRankSum()" placeholder="숫자 입력">
+            </div>
+
+            <div class="input-group">
+                <label for="cutpop">길조 명성 입력 (선택)</label>
+                <input type="number" id="cutpop" step="1" oninput="calculateRankSum()" placeholder="숫자 입력">
+            </div>
+            <div class="input-group">
+                <label for="cutrank">길조 랭크 입력 (선택)</label>
+                <input type="number" id="cutrank" step="100" oninput="calculateRankSum()" placeholder="숫자 입력">
             </div>
 
             <div id="rankResultBox" class="result-box">
@@ -352,7 +361,7 @@
         <div class="modal-content" onclick="event.stopPropagation()">
             <h3>마피아 계산기 안내</h3>
             <p>마피아42 유저분들을 위한 통합 편의 기능입니다.</p>
-            <p><strong>• 명랭합 계산기:</strong> 명성과 랭크 점수를 더하여 10000당 1로 측정합니다. 길조를 적으면 통과 여부를 알려줍니다.</p>
+            <p><strong>• 명랭합(길조) 계산기:</strong> 명성과 랭크 점수를 더하여 10000당 1로 측정합니다. 길조를 적으면 통과 여부를 알려줍니다.</p>
             <p><strong>• 우칸 계산기:</strong> 현재 우칸과 목표 우칸을 적으면, 소요 루블 비용을 알려드립니다.<span style="font-size:50%; color: #aaa;"><br>헤르메스는 넣기 귀찮아요</span></p>
             <button class="close-modal-btn" onclick="document.getElementById('infoModal').classList.remove('show')">확인</button>
         </div>
@@ -405,6 +414,8 @@
             const repStr = document.getElementById('reputation').value;
             const rankStr = document.getElementById('rankScore').value;
             const cutStr = document.getElementById('cutline').value;
+            const cutRStr = document.getElementById('cutrank').value;
+            const cutPStr = document.getElementById('cutpop').value;
             
             const resultTitle = document.getElementById('rankResultTitle');
             const resultElement = document.getElementById('rankResultPrice');
@@ -413,7 +424,7 @@
             resultTitle.innerText = "계산 결과 (명랭합 수치)";
 
             if (!repStr || !rankStr) {
-                resultElement.innerText = "수치를 입력해주세요.";
+                resultElement.innerText = "명랭 입력";
                 resultElement.style.color = "aquamarine";
                 resultBox.style.borderColor = "aquamarine";
                 return;
@@ -430,7 +441,30 @@
             let sumResult = (rep + rank) / 10000;
             let formattedResult = sumResult.toFixed(2);
 
-            if (cutStr !== "") {
+            if (cutStr !== "" && cutRStr !== "" && cutPStr !== "") {
+                const cutline = parseFloat(cutStr);
+                const cutRank = parseFloat(cutRStr);
+                const cutPop = parseFloat(cutPStr);
+                
+                if (isNaN(cutline) || isNaN(cutRStr) || isNaN(cutPStr)) {
+                    showError('rank', "똑바로 적으셈;;");
+                    return;
+                }
+
+                let finalCheckValue = parseFloat(formattedResult);
+
+                if (finalCheckValue >= cutline && rep >= cutPop && rank >= cutRank) {
+                    resultTitle.innerText = "길조 통과";
+                    resultElement.innerText = formattedResult;
+                    resultElement.style.color = "LightGreen";
+                    resultBox.style.borderColor = "LightGreen";
+                } else {
+                    resultTitle.innerText = "길조 미달";
+                    resultElement.innerText = formattedResult;
+                    resultElement.style.color = "#ff6b6b";
+                    resultBox.style.borderColor = "#ff6b6b";
+                }
+            } else if (cutStr !== "") {
                 const cutline = parseFloat(cutStr);
                 
                 if (isNaN(cutline)) {
