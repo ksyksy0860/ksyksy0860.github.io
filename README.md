@@ -1,1 +1,0 @@
-# ksyksy0860.github.io
