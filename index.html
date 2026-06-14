@@ -216,6 +216,37 @@
             white-space: pre-line;
         }
 
+        /* 🔗 시뮬링크 전용 버튼 스타일 */
+        .link-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .sim-btn {
+            background-color: #1a1a1a;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+            display: block;
+        }
+
+        .sim-btn:hover {
+            background-color: aquamarine;
+            color: #000;
+            border-color: aquamarine;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(127, 255, 212, 0.2);
+        }
+
         /* 팝업 모달창 전체 배경 가림막 */
         .modal-overlay {
             position: fixed;
@@ -299,6 +330,9 @@
             <p id="ukan" class="mainmenu" onclick="showCalculator('ukan')">
                 - 우칸 계산기
             </p>
+            <p id="simlink" class="mainmenu" onclick="showCalculator('sim')">
+                - 시뮬링크
+            </p>
         </nav>
     </div>
 
@@ -361,14 +395,27 @@
             </div>
         </div>
 
+        <div id="simCalc" class="calculator-card">
+            <h2>시뮬레이터 링크</h2>
+            <p style="color: #aaa; font-size: 0.9rem; margin-bottom: 20px;">원하는 시뮬레이터 사이트로 바로 이동합니다.</p>
+            
+            <div class="link-group">
+                <a href="https://hanaida.github.io/mafia42" target="_blank" class="sim-btn">떡치기(돼지)</a>
+                <a href="https://hanaida.github.io/rabbit" target="_blank" class="sim-btn">떡치기(토끼)</a>
+                <a href="https://hanaida.github.io/hard" target="_blank" class="sim-btn">떡치기(통합)</a>
+                <a href="https://hanaida.github.io/jaum" target="_blank" class="sim-btn">자숲 단어찾기</a>
+            </div>
+        </div>
+
     </div>
 
     <div id="infoModal" class="modal-overlay" onclick="closeInfoModal(event)">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <h3>마피아 계산기 안내</h3>
-            <p>마피아42 유저분들을 위한 계산기입니다.(Made By 째매씨)</p>
+            <h3>마피아 계산기!</h3>
+            <p>마피아42 유저분들을 위한 계산기 및 다양한 시뮬레이터 링크정보 사이트입니다.<br>(Made By 째매씨)</p>
             <p><strong>• 명랭합(길조) 계산기:</strong> 명성과 랭크 점수를 더하여 10,000으로 나눕니다. 길조 커트라인을 적으면 통과 여부를 알려줍니다.</p>
             <p><strong>• 우칸 계산기:</strong> 현재 우칸과 목표 우칸을 적으면, 소요 루블 비용을 알려드립니다. 헤르메스도 구현되어 있어요!</p>
+            <p><strong>• 시뮬링크:</strong> 시뮬레이터 사이트들로 이동할 수 있어요!</p>
             <button class="close-modal-btn" onclick="document.getElementById('infoModal').classList.remove('show')">확인</button>
         </div>
     </div>
@@ -393,15 +440,18 @@
             }
         }
 
-        // 계산기 탭 전환 (명랭합 vs 우칸)
+        // 계산기 탭 전환 (명랭합 vs 우칸 vs 시뮬링크)
         function showCalculator(type) {
             document.getElementById('rankCalc').classList.remove('active');
             document.getElementById('ukanCalc').classList.remove('active');
+            document.getElementById('simCalc').classList.remove('active');
 
             if (type === 'rank') {
                 document.getElementById('rankCalc').classList.add('active');
             } else if (type === 'ukan') {
                 document.getElementById('ukanCalc').classList.add('active');
+            } else if (type === 'sim') {
+                document.getElementById('simCalc').classList.add('active');
             }
             
             const menu = document.getElementById('menuContainer');
@@ -436,7 +486,6 @@
 
             resultTitle.innerText = "계산 결과 (명랭합 수치)";
 
-            // 필수 입력값 검사 (명성, 랭크 점수)
             if (!repStr || !rankStr) {
                 resultElement.innerText = "명랭 입력";
                 resultElement.style.color = "aquamarine";
@@ -456,11 +505,9 @@
             let formattedResult = sumResult.toFixed(2);
             let finalCheckValue = parseFloat(formattedResult);
 
-            // 선택사항 유연한 조건 체크 로직
-            let hasCondition = false;  // 선택사항 입력 여부
-            let isPassed = true;       // 통과 여부 (기본값 true)
+            let hasCondition = false;  
+            let isPassed = true;       
 
-            // 1) 길조 명랭합 컷라인 체크 (입력했을 때만)
             if (cutStr !== "") {
                 const cutline = parseFloat(cutStr);
                 if (isNaN(cutline)) { showError('rank', "똑바로 적으셈;;"); return; }
@@ -468,7 +515,6 @@
                 if (finalCheckValue < cutline) isPassed = false;
             }
 
-            // 2) 길조 명성 커트라인 체크 (입력했을 때만)
             if (cutPStr !== "") {
                 const cutPop = parseFloat(cutPStr);
                 if (isNaN(cutPop)) { showError('rank', "똑바로 적으셈;;"); return; }
@@ -476,7 +522,6 @@
                 if (rep < cutPop) isPassed = false;
             }
 
-            // 3) 길조 랭크 커트라인 체크 (입력했을 때만)
             if (cutRStr !== "") {
                 const cutRank = parseFloat(cutRStr);
                 if (isNaN(cutRank)) { showError('rank', "똑바로 적으셈;;"); return; }
@@ -484,9 +529,7 @@
                 if (rank < cutRank) isPassed = false;
             }
 
-            // 결과 화면 업데이트
             if (hasCondition) {
-                // 선택사항이 1개 이상 입력된 경우 판정 결과 출력
                 if (isPassed) {
                     resultTitle.innerText = "길조 통과";
                     resultElement.innerText = formattedResult;
@@ -499,7 +542,6 @@
                     resultBox.style.borderColor = "#ff6b6b";
                 }
             } else {
-                // 선택사항이 없는 경우 기본 수치만 출력
                 resultElement.innerText = formattedResult;
                 resultElement.style.color = "aquamarine";
                 resultBox.style.borderColor = "aquamarine";
@@ -530,7 +572,6 @@
 
             if (hermesCount < 0) hermesCount = 0;
 
-            // 조건부 유효성 검사 (42부터 시작, 10단위, 2로 끝나야 함, 목표가 더 커야 함)
             if (current < 42 || target < 42 || current % 10 !== 2 || target % 10 !== 2 || target <= current) {
                 resultTitle.innerText = "계산 결과";
                 showError('ukan', "똑바로 적으셈;;");
@@ -540,7 +581,6 @@
             resultElement.style.color = "aquamarine";
             resultBox.style.borderColor = "aquamarine";
 
-            // 각 단계별 비용 리스트 뽑기 (예: 42->52 비용, 52->62 비용...)
             let costs = [];
             let currentCheck = current;
             while (currentCheck < target) {
@@ -549,23 +589,20 @@
                 currentCheck += 10;
             }
 
-            // 헤르메스 가방 최적화 로직 적용: 비용이 큰 단계(리스트 뒷부분)부터 가방을 차감시킴
             let savedCost = 0;
             let finalHermesUsed = 0;
             
             for (let i = costs.length - 1; i >= 0; i--) {
                 if (hermesCount > 0) {
                     savedCost += costs[i];
-                    costs[i] = 0; // 해당 단계 무료 처리
+                    costs[i] = 0; 
                     hermesCount--;
                     finalHermesUsed++;
                 }
             }
 
-            // 최종 지불할 루블 합산
             let totalCost = costs.reduce((sum, cost) => sum + cost, 0);
 
-            // 결과 화면 안내 문구 세팅
             if (finalHermesUsed > 0) {
                 resultTitle.innerText = `헤르메스 ${finalHermesUsed}개 적용중..`;
             } else {
@@ -590,6 +627,5 @@
             resultBox.style.borderColor = "#ff6b6b";     
         }
     </script>
-
 </body>
 </html>
