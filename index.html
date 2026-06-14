@@ -318,7 +318,7 @@
 
             <div class="input-group">
                 <label for="cutline">길조 명랭합 입력 (선택)</label>
-                <input type="number" id="cutline" step="0.1" oninput="calculateRankSum()" placeholder="예: 5.5">
+                <input type="number" id="cutline" step="0.1" oninput="calculateRankSum()" placeholder="예: 0.5">
             </div>
 
             <div class="input-group">
@@ -349,8 +349,13 @@
                 <input type="number" id="targetUkan" min="52" step="10" value="52" oninput="calculateRubles()" placeholder="52, 62, 72...">
             </div>
 
+            <div class="input-group">
+                <label for="hermesBag">헤르메스의 엽서가방 개수 (선택)</label>
+                <input type="number" id="hermesBag" min="0" value="0" oninput="calculateRubles()" placeholder="보유 개수 입력">
+            </div>
+
             <div id="ukanResultBox" class="result-box">
-                <div class="result-title">계산 결과</div>
+                <div id="ukanResultTitle" class="result-title">계산 결과</div>
                 <div id="ukanResultPrice" class="result-value">우칸을 입력해주세요.</div>
             </div>
         </div>
@@ -360,200 +365,229 @@
     <div id="infoModal" class="modal-overlay" onclick="closeInfoModal(event)">
         <div class="modal-content" onclick="event.stopPropagation()">
             <h3>마피아 계산기 안내</h3>
-            <p>마피아42 유저분들을 위한 통합 편의 기능입니다.</p>
-            <p><strong>• 명랭합(길조) 계산기:</strong> 명성과 랭크 점수를 더하여 10,000당 1로 측정합니다. 길조 컷라인을 적으면 통과 여부를 알려줍니다.</p>
-            <p><strong>• 우칸 계산기:</strong> 현재 우칸과 목표 우칸을 적으면, 소요 루블 비용을 알려드립니다.<span style="font-size:75%; color: #aaa;"><br>(헤르메스는 제외된 기본 비용입니다.)</span></p>
+            <p>마피아42 유저분들을 위한 계산기입니다.(Made By 째매씨)</p>
+            <p><strong>• 명랭합(길조) 계산기:</strong> 명성과 랭크 점수를 더하여 10,000으로 나눕니다. 길조 커트라인을 적으면 통과 여부를 알려줍니다.</p>
+            <p><strong>• 우칸 계산기:</strong> 현재 우칸과 목표 우칸을 적으면, 소요 루블 비용을 알려드립니다. 헤르메스 가방 입력 시 비용이 가장 큰 최고 단계부터 무료 처리하여 루블을 최적화(최소화)합니다.</p>
             <button class="close-modal-btn" onclick="document.getElementById('infoModal').classList.remove('show')">확인</button>
         </div>
     </div>
 
     <script>
         // 페이지 로드 시 초기 연산 및 모달 팝업 실행
-window.onload = function() {
-    calculateRankSum();
-    calculateRubles();
-    openInfoModal(); 
-};
+        window.onload = function() {
+            calculateRankSum();
+            calculateRubles();
+            openInfoModal(); 
+        };
 
-// 모바일 메뉴 열고 닫기
-function toggleMenu() {
-    const menu = document.getElementById('menuContainer');
-    const btn = document.querySelector('.toggle-btn');
-    menu.classList.toggle('open');
-    if (menu.classList.contains('open')) {
-        btn.innerText = '메뉴 닫기 ▲';
-    } else {
-        btn.innerText = '계산기 메뉴 ▼';
-    }
-}
-
-// 계산기 탭 전환 (명랭합 vs 우칸)
-function showCalculator(type) {
-    document.getElementById('rankCalc').classList.remove('active');
-    document.getElementById('ukanCalc').classList.remove('active');
-
-    if (type === 'rank') {
-        document.getElementById('rankCalc').classList.add('active');
-    } else if (type === 'ukan') {
-        document.getElementById('ukanCalc').classList.add('active');
-    }
-    
-    const menu = document.getElementById('menuContainer');
-    if(menu.classList.contains('open')) {
-        toggleMenu();
-    }
-}
-
-// 안내 팝업 열기
-function openInfoModal() {
-    document.getElementById('infoModal').classList.add('show');
-}
-
-// 안내 팝업 닫기 (바깥 어두운 배경 클릭 시)
-function closeInfoModal(e) {
-    if (e.target === document.getElementById('infoModal')) {
-        document.getElementById('infoModal').classList.remove('show');
-    }
-}
-
-// 📊 1. 명랭합(길조) 계산기 로직
-function calculateRankSum() {
-    const repStr = document.getElementById('reputation').value;
-    const rankStr = document.getElementById('rankScore').value;
-    const cutStr = document.getElementById('cutline').value;
-    const cutRStr = document.getElementById('cutrank').value;
-    const cutPStr = document.getElementById('cutpop').value;
-    
-    const resultTitle = document.getElementById('rankResultTitle');
-    const resultElement = document.getElementById('rankResultPrice');
-    const resultBox = document.getElementById('rankResultBox');
-
-    resultTitle.innerText = "계산 결과 (명랭합 수치)";
-
-    // 필수 입력값 검사 (명성, 랭크 점수)
-    if (!repStr || !rankStr) {
-        resultElement.innerText = "명랭 입력";
-        resultElement.style.color = "aquamarine";
-        resultBox.style.borderColor = "aquamarine";
-        return;
-    }
-
-    const rep = parseFloat(repStr);
-    const rank = parseFloat(rankStr);
-
-    if (isNaN(rep) || isNaN(rank)) {
-        showError('rank', "똑바로 적으셈;;");
-        return;
-    }
-
-    let sumResult = (rep + rank) / 10000;
-    let formattedResult = sumResult.toFixed(2);
-    let finalCheckValue = parseFloat(formattedResult);
-
-    // 선택사항 유연한 조건 체크 로직
-    let hasCondition = false;  // 선택사항 입력 여부
-    let isPassed = true;       // 통과 여부 (기본값 true)
-
-    // 1) 길조 명랭합 컷라인 체크 (입력했을 때만)
-    if (cutStr !== "") {
-        const cutline = parseFloat(cutStr);
-        if (isNaN(cutline)) { showError('rank', "똑바로 적으셈;;"); return; }
-        hasCondition = true;
-        if (finalCheckValue < cutline) isPassed = false;
-    }
-
-    // 2) 길조 명성 커트라인 체크 (입력했을 때만)
-    if (cutPStr !== "") {
-        const cutPop = parseFloat(cutPStr);
-        if (isNaN(cutPop)) { showError('rank', "똑바로 적으셈;;"); return; }
-        hasCondition = true;
-        if (rep < cutPop) isPassed = false;
-    }
-
-    // 3) 길조 랭크 커트라인 체크 (입력했을 때만)
-    if (cutRStr !== "") {
-        const cutRank = parseFloat(cutRStr);
-        if (isNaN(cutRank)) { showError('rank', "똑바로 적으셈;;"); return; }
-        hasCondition = true;
-        if (rank < cutRank) isPassed = false;
-    }
-
-    // 결과 화면 업데이트
-    if (hasCondition) {
-        // 선택사항이 1개 이상 입력된 경우 판정 결과 출력
-        if (isPassed) {
-            resultTitle.innerText = "길조 통과";
-            resultElement.innerText = formattedResult;
-            resultElement.style.color = "LightGreen";
-            resultBox.style.borderColor = "LightGreen";
-        } else {
-            resultTitle.innerText = "길조 미달";
-            resultElement.innerText = formattedResult;
-            resultElement.style.color = "#ff6b6b";
-            resultBox.style.borderColor = "#ff6b6b";
+        // 모바일 메뉴 열고 닫기
+        function toggleMenu() {
+            const menu = document.getElementById('menuContainer');
+            const btn = document.querySelector('.toggle-btn');
+            menu.classList.toggle('open');
+            if (menu.classList.contains('open')) {
+                btn.innerText = '메뉴 닫기 ▲';
+            } else {
+                btn.innerText = '계산기 메뉴 ▼';
+            }
         }
-    } else {
-        // 선택사항이 없는 경우 기본 수치만 출력
-        resultElement.innerText = formattedResult;
-        resultElement.style.color = "aquamarine";
-        resultBox.style.borderColor = "aquamarine";
-    }
-}
 
-// 💰 2. 우칸 계산기 로직
-function calculateRubles() {
-    const currentStr = document.getElementById('currentUkan').value;
-    const targetStr = document.getElementById('targetUkan').value;
-    
-    const resultElement = document.getElementById('ukanResultPrice');
-    const resultBox = document.getElementById('ukanResultBox');
+        // 계산기 탭 전환 (명랭합 vs 우칸)
+        function showCalculator(type) {
+            document.getElementById('rankCalc').classList.remove('active');
+            document.getElementById('ukanCalc').classList.remove('active');
 
-    if (!currentStr || !targetStr) {
-        resultElement.innerText = "우칸을 입력해주세요.";
-        resultElement.style.color = "aquamarine";
-        resultBox.style.borderColor = "aquamarine";
-        return;
-    }
+            if (type === 'rank') {
+                document.getElementById('rankCalc').classList.add('active');
+            } else if (type === 'ukan') {
+                document.getElementById('ukanCalc').classList.add('active');
+            }
+            
+            const menu = document.getElementById('menuContainer');
+            if(menu.classList.contains('open')) {
+                toggleMenu();
+            }
+        }
 
-    const current = parseInt(currentStr);
-    const target = parseInt(targetStr);
+        // 안내 팝업 열기
+        function openInfoModal() {
+            document.getElementById('infoModal').classList.add('show');
+        }
 
-    // 조건부 유효성 검사 (42부터 시작, 10단위, 2로 끝나야 함, 목표가 더 커야 함)
-    if (current < 42 || target < 42 || current % 10 !== 2 || target % 10 !== 2 || target <= current) {
-        showError('ukan', "똑바로 적으셈;;");
-        return;
-    }
+        // 안내 팝업 닫기 (바깥 어두운 배경 클릭 시)
+        function closeInfoModal(e) {
+            if (e.target === document.getElementById('infoModal')) {
+                document.getElementById('infoModal').classList.remove('show');
+            }
+        }
 
-    resultElement.style.color = "aquamarine";
-    resultBox.style.borderColor = "aquamarine";
+        // 📊 1. 명랭합(길조) 계산기 로직
+        function calculateRankSum() {
+            const repStr = document.getElementById('reputation').value;
+            const rankStr = document.getElementById('rankScore').value;
+            const cutStr = document.getElementById('cutline').value;
+            const cutRStr = document.getElementById('cutrank').value;
+            const cutPStr = document.getElementById('cutpop').value;
+            
+            const resultTitle = document.getElementById('rankResultTitle');
+            const resultElement = document.getElementById('rankResultPrice');
+            const resultBox = document.getElementById('rankResultBox');
 
-    let totalCost = 0;
-    let currentCheck = current;
+            resultTitle.innerText = "계산 결과 (명랭합 수치)";
 
-    // 단계별 소요 비용 누적 계산
-    while (currentCheck < target) {
-        let stepCost = ((currentCheck - 42) / 10 + 1) * 10000;
-        totalCost += stepCost;
-        currentCheck += 10;
-    }
+            // 필수 입력값 검사 (명성, 랭크 점수)
+            if (!repStr || !rankStr) {
+                resultElement.innerText = "명랭 입력";
+                resultElement.style.color = "aquamarine";
+                resultBox.style.borderColor = "aquamarine";
+                return;
+            }
 
-    resultElement.innerText = totalCost.toLocaleString() + " 루블";
-}
+            const rep = parseFloat(repStr);
+            const rank = parseFloat(rankStr);
 
-// ❌ 에러 메시지 공통 표시 함수
-function showError(type, message) {
-    let resultElement, resultBox;
-    if(type === 'rank') {
-        resultElement = document.getElementById('rankResultPrice');
-        resultBox = document.getElementById('rankResultBox');
-    } else {
-        resultElement = document.getElementById('ukanResultPrice');
-        resultBox = document.getElementById('ukanResultBox');
-    }
-    resultElement.innerText = message;
-    resultElement.style.color = "#ff6b6b";       
-    resultBox.style.borderColor = "#ff6b6b";     
-}
+            if (isNaN(rep) || isNaN(rank)) {
+                showError('rank', "똑바로 적으셈;;");
+                return;
+            }
+
+            let sumResult = (rep + rank) / 10000;
+            let formattedResult = sumResult.toFixed(2);
+            let finalCheckValue = parseFloat(formattedResult);
+
+            // 선택사항 유연한 조건 체크 로직
+            let hasCondition = false;  // 선택사항 입력 여부
+            let isPassed = true;       // 통과 여부 (기본값 true)
+
+            // 1) 길조 명랭합 컷라인 체크 (입력했을 때만)
+            if (cutStr !== "") {
+                const cutline = parseFloat(cutStr);
+                if (isNaN(cutline)) { showError('rank', "똑바로 적으셈;;"); return; }
+                hasCondition = true;
+                if (finalCheckValue < cutline) isPassed = false;
+            }
+
+            // 2) 길조 명성 커트라인 체크 (입력했을 때만)
+            if (cutPStr !== "") {
+                const cutPop = parseFloat(cutPStr);
+                if (isNaN(cutPop)) { showError('rank', "똑바로 적으셈;;"); return; }
+                hasCondition = true;
+                if (rep < cutPop) isPassed = false;
+            }
+
+            // 3) 길조 랭크 커트라인 체크 (입력했을 때만)
+            if (cutRStr !== "") {
+                const cutRank = parseFloat(cutRStr);
+                if (isNaN(cutRank)) { showError('rank', "똑바로 적으셈;;"); return; }
+                hasCondition = true;
+                if (rank < cutRank) isPassed = false;
+            }
+
+            // 결과 화면 업데이트
+            if (hasCondition) {
+                // 선택사항이 1개 이상 입력된 경우 판정 결과 출력
+                if (isPassed) {
+                    resultTitle.innerText = "길조 통과";
+                    resultElement.innerText = formattedResult;
+                    resultElement.style.color = "LightGreen";
+                    resultBox.style.borderColor = "LightGreen";
+                } else {
+                    resultTitle.innerText = "길조 미달";
+                    resultElement.innerText = formattedResult;
+                    resultElement.style.color = "#ff6b6b";
+                    resultBox.style.borderColor = "#ff6b6b";
+                }
+            } else {
+                // 선택사항이 없는 경우 기본 수치만 출력
+                resultElement.innerText = formattedResult;
+                resultElement.style.color = "aquamarine";
+                resultBox.style.borderColor = "aquamarine";
+            }
+        }
+
+        // 💰 2. 우칸 계산기 로직
+        function calculateRubles() {
+            const currentStr = document.getElementById('currentUkan').value;
+            const targetStr = document.getElementById('targetUkan').value;
+            const hermesStr = document.getElementById('hermesBag').value;
+            
+            const resultTitle = document.getElementById('ukanResultTitle');
+            const resultElement = document.getElementById('ukanResultPrice');
+            const resultBox = document.getElementById('ukanResultBox');
+
+            if (!currentStr || !targetStr) {
+                resultTitle.innerText = "계산 결과";
+                resultElement.innerText = "우칸을 입력해주세요.";
+                resultElement.style.color = "aquamarine";
+                resultBox.style.borderColor = "aquamarine";
+                return;
+            }
+
+            const current = parseInt(currentStr);
+            const target = parseInt(targetStr);
+            let hermesCount = parseInt(hermesStr) || 0;
+
+            if (hermesCount < 0) hermesCount = 0;
+
+            // 조건부 유효성 검사 (42부터 시작, 10단위, 2로 끝나야 함, 목표가 더 커야 함)
+            if (current < 42 || target < 42 || current % 10 !== 2 || target % 10 !== 2 || target <= current) {
+                resultTitle.innerText = "계산 결과";
+                showError('ukan', "똑바로 적으셈;;");
+                return;
+            }
+
+            resultElement.style.color = "aquamarine";
+            resultBox.style.borderColor = "aquamarine";
+
+            // 각 단계별 비용 리스트 뽑기 (예: 42->52 비용, 52->62 비용...)
+            let costs = [];
+            let currentCheck = current;
+            while (currentCheck < target) {
+                let stepCost = ((currentCheck - 42) / 10 + 1) * 10000;
+                costs.push(stepCost);
+                currentCheck += 10;
+            }
+
+            // 헤르메스 가방 최적화 로직 적용: 비용이 큰 단계(리스트 뒷부분)부터 가방을 차감시킴
+            let savedCost = 0;
+            let finalHermesUsed = 0;
+            
+            for (let i = costs.length - 1; i >= 0; i--) {
+                if (hermesCount > 0) {
+                    savedCost += costs[i];
+                    costs[i] = 0; // 해당 단계 무료 처리
+                    hermesCount--;
+                    finalHermesUsed++;
+                }
+            }
+
+            // 최종 지불할 루블 합산
+            let totalCost = costs.reduce((sum, cost) => sum + cost, 0);
+
+            // 결과 화면 안내 문구 세팅
+            if (finalHermesUsed > 0) {
+                resultTitle.innerText = `헤르메스 가방 ${finalHermesUsed}개 최적 적용 완료 (가장 비싼 구간 자동 무료)`;
+            } else {
+                resultTitle.innerText = "계산 결과";
+            }
+
+            resultElement.innerText = totalCost.toLocaleString() + " 루블";
+        }
+
+        // ❌ 에러 메시지 공통 표시 함수
+        function showError(type, message) {
+            let resultElement, resultBox;
+            if(type === 'rank') {
+                resultElement = document.getElementById('rankResultPrice');
+                resultBox = document.getElementById('rankResultBox');
+            } else {
+                resultElement = document.getElementById('ukanResultPrice');
+                resultBox = document.getElementById('ukanResultBox');
+            }
+            resultElement.innerText = message;
+            resultElement.style.color = "#ff6b6b";       
+            resultBox.style.borderColor = "#ff6b6b";     
+        }
     </script>
 
 </body>
