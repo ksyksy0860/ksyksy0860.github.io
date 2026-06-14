@@ -368,181 +368,192 @@
     </div>
 
     <script>
-        window.onload = function() {
-            calculateRankSum();
-            calculateRubles();
-            openInfoModal(); 
-        };
+        // 페이지 로드 시 초기 연산 및 모달 팝업 실행
+window.onload = function() {
+    calculateRankSum();
+    calculateRubles();
+    openInfoModal(); 
+};
 
-        function toggleMenu() {
-            const menu = document.getElementById('menuContainer');
-            const btn = document.querySelector('.toggle-btn');
-            menu.classList.toggle('open');
-            if (menu.classList.contains('open')) {
-                btn.innerText = '메뉴 닫기 ▲';
-            } else {
-                btn.innerText = '계산기 메뉴 ▼';
-            }
+// 모바일 메뉴 열고 닫기
+function toggleMenu() {
+    const menu = document.getElementById('menuContainer');
+    const btn = document.querySelector('.toggle-btn');
+    menu.classList.toggle('open');
+    if (menu.classList.contains('open')) {
+        btn.innerText = '메뉴 닫기 ▲';
+    } else {
+        btn.innerText = '계산기 메뉴 ▼';
+    }
+}
+
+// 계산기 탭 전환 (명랭합 vs 우칸)
+function showCalculator(type) {
+    document.getElementById('rankCalc').classList.remove('active');
+    document.getElementById('ukanCalc').classList.remove('active');
+
+    if (type === 'rank') {
+        document.getElementById('rankCalc').classList.add('active');
+    } else if (type === 'ukan') {
+        document.getElementById('ukanCalc').classList.add('active');
+    }
+    
+    const menu = document.getElementById('menuContainer');
+    if(menu.classList.contains('open')) {
+        toggleMenu();
+    }
+}
+
+// 안내 팝업 열기
+function openInfoModal() {
+    document.getElementById('infoModal').classList.add('show');
+}
+
+// 안내 팝업 닫기 (바깥 어두운 배경 클릭 시)
+function closeInfoModal(e) {
+    if (e.target === document.getElementById('infoModal')) {
+        document.getElementById('infoModal').classList.remove('show');
+    }
+}
+
+// 📊 1. 명랭합(길조) 계산기 로직
+function calculateRankSum() {
+    const repStr = document.getElementById('reputation').value;
+    const rankStr = document.getElementById('rankScore').value;
+    const cutStr = document.getElementById('cutline').value;
+    const cutRStr = document.getElementById('cutrank').value;
+    const cutPStr = document.getElementById('cutpop').value;
+    
+    const resultTitle = document.getElementById('rankResultTitle');
+    const resultElement = document.getElementById('rankResultPrice');
+    const resultBox = document.getElementById('rankResultBox');
+
+    resultTitle.innerText = "계산 결과 (명랭합 수치)";
+
+    // 필수 입력값 검사 (명성, 랭크 점수)
+    if (!repStr || !rankStr) {
+        resultElement.innerText = "명랭 입력";
+        resultElement.style.color = "aquamarine";
+        resultBox.style.borderColor = "aquamarine";
+        return;
+    }
+
+    const rep = parseFloat(repStr);
+    const rank = parseFloat(rankStr);
+
+    if (isNaN(rep) || isNaN(rank)) {
+        showError('rank', "똑바로 적으셈;;");
+        return;
+    }
+
+    let sumResult = (rep + rank) / 10000;
+    let formattedResult = sumResult.toFixed(2);
+    let finalCheckValue = parseFloat(formattedResult);
+
+    // 선택사항 유연한 조건 체크 로직
+    let hasCondition = false;  // 선택사항 입력 여부
+    let isPassed = true;       // 통과 여부 (기본값 true)
+
+    // 1) 길조 명랭합 컷라인 체크 (입력했을 때만)
+    if (cutStr !== "") {
+        const cutline = parseFloat(cutStr);
+        if (isNaN(cutline)) { showError('rank', "똑바로 적으셈;;"); return; }
+        hasCondition = true;
+        if (finalCheckValue < cutline) isPassed = false;
+    }
+
+    // 2) 길조 명성 커트라인 체크 (입력했을 때만)
+    if (cutPStr !== "") {
+        const cutPop = parseFloat(cutPStr);
+        if (isNaN(cutPop)) { showError('rank', "똑바로 적으셈;;"); return; }
+        hasCondition = true;
+        if (rep < cutPop) isPassed = false;
+    }
+
+    // 3) 길조 랭크 커트라인 체크 (입력했을 때만)
+    if (cutRStr !== "") {
+        const cutRank = parseFloat(cutRStr);
+        if (isNaN(cutRank)) { showError('rank', "똑바로 적으셈;;"); return; }
+        hasCondition = true;
+        if (rank < cutRank) isPassed = false;
+    }
+
+    // 결과 화면 업데이트
+    if (hasCondition) {
+        // 선택사항이 1개 이상 입력된 경우 판정 결과 출력
+        if (isPassed) {
+            resultTitle.innerText = "길조 통과";
+            resultElement.innerText = formattedResult;
+            resultElement.style.color = "LightGreen";
+            resultBox.style.borderColor = "LightGreen";
+        } else {
+            resultTitle.innerText = "길조 미달";
+            resultElement.innerText = formattedResult;
+            resultElement.style.color = "#ff6b6b";
+            resultBox.style.borderColor = "#ff6b6b";
         }
+    } else {
+        // 선택사항이 없는 경우 기본 수치만 출력
+        resultElement.innerText = formattedResult;
+        resultElement.style.color = "aquamarine";
+        resultBox.style.borderColor = "aquamarine";
+    }
+}
 
-        function showCalculator(type) {
-            document.getElementById('rankCalc').classList.remove('active');
-            document.getElementById('ukanCalc').classList.remove('active');
+// 💰 2. 우칸 계산기 로직
+function calculateRubles() {
+    const currentStr = document.getElementById('currentUkan').value;
+    const targetStr = document.getElementById('targetUkan').value;
+    
+    const resultElement = document.getElementById('ukanResultPrice');
+    const resultBox = document.getElementById('ukanResultBox');
 
-            if (type === 'rank') {
-                document.getElementById('rankCalc').classList.add('active');
-            } else if (type === 'ukan') {
-                document.getElementById('ukanCalc').classList.add('active');
-            }
-            
-            const menu = document.getElementById('menuContainer');
-            if(menu.classList.contains('open')) {
-                toggleMenu();
-            }
-        }
+    if (!currentStr || !targetStr) {
+        resultElement.innerText = "우칸을 입력해주세요.";
+        resultElement.style.color = "aquamarine";
+        resultBox.style.borderColor = "aquamarine";
+        return;
+    }
 
-        function openInfoModal() {
-            document.getElementById('infoModal').classList.add('show');
-        }
-        
-        function closeInfoModal(e) {
-            if (e.target === document.getElementById('infoModal')) {
-                document.getElementById('infoModal').classList.remove('show');
-            }
-        }
+    const current = parseInt(currentStr);
+    const target = parseInt(targetStr);
 
-        function calculateRankSum() {
-            const repStr = document.getElementById('reputation').value;
-            const rankStr = document.getElementById('rankScore').value;
-            const cutStr = document.getElementById('cutline').value;
-            const cutRStr = document.getElementById('cutrank').value;
-            const cutPStr = document.getElementById('cutpop').value;
-            
-            const resultTitle = document.getElementById('rankResultTitle');
-            const resultElement = document.getElementById('rankResultPrice');
-            const resultBox = document.getElementById('rankResultBox');
+    // 조건부 유효성 검사 (42부터 시작, 10단위, 2로 끝나야 함, 목표가 더 커야 함)
+    if (current < 42 || target < 42 || current % 10 !== 2 || target % 10 !== 2 || target <= current) {
+        showError('ukan', "똑바로 적으셈;;");
+        return;
+    }
 
-            resultTitle.innerText = "계산 결과 (명랭합 수치)";
+    resultElement.style.color = "aquamarine";
+    resultBox.style.borderColor = "aquamarine";
 
-            if (!repStr || !rankStr) {
-                resultElement.innerText = "명랭 입력";
-                resultElement.style.color = "aquamarine";
-                resultBox.style.borderColor = "aquamarine";
-                return;
-            }
+    let totalCost = 0;
+    let currentCheck = current;
 
-            const rep = parseFloat(repStr);
-            const rank = parseFloat(rankStr);
+    // 단계별 소요 비용 누적 계산
+    while (currentCheck < target) {
+        let stepCost = ((currentCheck - 42) / 10 + 1) * 10000;
+        totalCost += stepCost;
+        currentCheck += 10;
+    }
 
-            if (isNaN(rep) || isNaN(rank)) {
-                showError('rank', "똑바로 적으셈;;");
-                return;
-            }
+    resultElement.innerText = totalCost.toLocaleString() + " 루블";
+}
 
-            let sumResult = (rep + rank) / 10000;
-            let formattedResult = sumResult.toFixed(2);
-
-            if (cutStr !== "" && cutRStr !== "" && cutPStr !== "") {
-                const cutline = parseFloat(cutStr);
-                const cutRank = parseFloat(cutRStr);
-                const cutPop = parseFloat(cutPStr);
-                
-                if (isNaN(cutline) || isNaN(cutRank) || isNaN(cutPop)) {
-                    showError('rank', "똑바로 적으셈;;");
-                    return;
-                }
-
-                let finalCheckValue = parseFloat(formattedResult);
-
-                if (finalCheckValue >= cutline && rep >= cutPop && rank >= cutRank) {
-                    resultTitle.innerText = "길조 통과";
-                    resultElement.innerText = formattedResult;
-                    resultElement.style.color = "LightGreen";
-                    resultBox.style.borderColor = "LightGreen";
-                } else {
-                    resultTitle.innerText = "길조 미달";
-                    resultElement.innerText = formattedResult;
-                    resultElement.style.color = "#ff6b6b";
-                    resultBox.style.borderColor = "#ff6b6b";
-                }
-            } else if (cutStr !== "") {
-                const cutline = parseFloat(cutStr);
-                
-                if (isNaN(cutline)) {
-                    showError('rank', "똑바로 적으셈;;");
-                    return;
-                }
-
-                let finalCheckValue = parseFloat(formattedResult);
-
-                if (finalCheckValue >= cutline) {
-                    resultTitle.innerText = "길조 통과";
-                    resultElement.innerText = formattedResult;
-                    resultElement.style.color = "LightGreen";
-                    resultBox.style.borderColor = "LightGreen";
-                } else {
-                    resultTitle.innerText = "길조 미달";
-                    resultElement.innerText = formattedResult;
-                    resultElement.style.color = "#ff6b6b";
-                    resultBox.style.borderColor = "#ff6b6b";
-                }
-            } else {
-                resultElement.innerText = formattedResult;
-                resultElement.style.color = "aquamarine";
-                resultBox.style.borderColor = "aquamarine";
-            }
-        }
-
-        function calculateRubles() {
-            const currentStr = document.getElementById('currentUkan').value;
-            const targetStr = document.getElementById('targetUkan').value;
-            
-            const resultElement = document.getElementById('ukanResultPrice');
-            const resultBox = document.getElementById('ukanResultBox');
-
-            if (!currentStr || !targetStr) {
-                resultElement.innerText = "우칸을 입력해주세요.";
-                resultElement.style.color = "aquamarine";
-                resultBox.style.borderColor = "aquamarine";
-                return;
-            }
-
-            const current = parseInt(currentStr);
-            const target = parseInt(targetStr);
-
-            if (current < 42 || target < 42 || current % 10 !== 2 || target % 10 !== 2 || target <= current) {
-                showError('ukan', "똑바로 적으셈;;");
-                return;
-            }
-
-            resultElement.style.color = "aquamarine";
-            resultBox.style.borderColor = "aquamarine";
-
-            let totalCost = 0;
-            let currentCheck = current;
-
-            while (currentCheck < target) {
-                let stepCost = ((currentCheck - 42) / 10 + 1) * 10000;
-                totalCost += stepCost;
-                currentCheck += 10;
-            }
-
-            resultElement.innerText = totalCost.toLocaleString() + " 루블";
-        }
-
-        function showError(type, message) {
-            let resultElement, resultBox;
-            if(type === 'rank') {
-                resultElement = document.getElementById('rankResultPrice');
-                resultBox = document.getElementById('rankResultBox');
-            } else {
-                resultElement = document.getElementById('ukanResultPrice');
-                resultBox = document.getElementById('ukanResultBox');
-            }
-            resultElement.innerText = message;
-            resultElement.style.color = "#ff6b6b";       
-            resultBox.style.borderColor = "#ff6b6b";     
-        }
+// ❌ 에러 메시지 공통 표시 함수
+function showError(type, message) {
+    let resultElement, resultBox;
+    if(type === 'rank') {
+        resultElement = document.getElementById('rankResultPrice');
+        resultBox = document.getElementById('rankResultBox');
+    } else {
+        resultElement = document.getElementById('ukanResultPrice');
+        resultBox = document.getElementById('ukanResultBox');
+    }
+    resultElement.innerText = message;
+    resultElement.style.color = "#ff6b6b";       
+    resultBox.style.borderColor = "#ff6b6b";     
+}
     </script>
 
 </body>
